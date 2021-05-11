@@ -1,0 +1,14 @@
+version: "3.7"
+services:
+    redis:
+        build:
+            context: ./redis_server/
+            dockerfile: Dockerfile
+        image: nlu_redis_dummy
+        container_name: nluredisdummy
+        restart: always
+        expose:
+            - 6379
+        ports:
+          - "6379:6379"
+

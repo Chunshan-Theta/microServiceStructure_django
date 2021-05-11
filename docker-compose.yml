@@ -11,4 +11,26 @@ services:
             - 6379
         ports:
           - "6379:6379"
+    worker_server:
+        build:
+            context: ./workers_server/
+            dockerfile: Dockerfile
+        image: workers_server_image
+        container_name: workers_server_container
+        restart: always
+        depends_on:
+            - redis
+    django_service_server:
+        build:
+            context: ./mysite/
+            dockerfile: Dockerfile
+        image: django_service_server_image
+        container_name: django_service_server_container
+        restart: always
+        depends_on:
+            - redis
+        expose:
+            - 8000
+        ports:
+            - "8000:8000"
 

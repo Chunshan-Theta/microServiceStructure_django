@@ -17,5 +17,6 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path('service1/', include('service_1.urls')),
+    path('jobs/', include('jobs_queue_service.urls')),
+    path('hb/', include('heartbeats_queue_service.urls')),
 ]

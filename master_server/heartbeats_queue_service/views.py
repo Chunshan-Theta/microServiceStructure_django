@@ -9,8 +9,6 @@ from django.http import JsonResponse
 from .util.aredis_queue import NLUQueue
 import uuid
 
-def index(request):
-    return HttpResponse("Hello, world. You're at the service_1 index.")
 
 
 def json(request: WSGIRequest):
@@ -34,37 +32,27 @@ def hello_world(request):
     })
 
 
-async def worker_test(request):
-    redis_to_MDL = NLUQueue(name="MDL", namespace="common")
+heartbeats_log = []
+
+
+async def index(request):
     redis_to_API = NLUQueue(name="API", namespace="common")
 
-    async def __new_work__(item):
-        request_id = str(uuid.uuid4())
-        print(f"new_work: {item}")
-        await redis_to_MDL.enqueue({
-            "obj": item,
-            "request_id": request_id
-        })
-        return request_id
-
-    async def __get_responds__(request_id: str):
-        res = await redis_to_API.get_msg_by_direct_id(request_id)
+    async def __get_heartbeats__():
+        res = await redis_to_API.dequeue_nowait()
         print(f"get_responds: {res}")
         return res
 
     if str(request.method) == "GET":
-        get_data = dict(request.GET)
-        request_id = await __new_work__(get_data)
-        worker_response = await __get_responds__(request_id)
-        time = 0
-        while worker_response is None and time < 500:
-            worker_response = await __get_responds__(request_id)
-            time += 1
-            await asyncio.sleep(0.1)
+        global heartbeats_log
+        heartbeats = await __get_heartbeats__()
+        while heartbeats is not None:
+            heartbeats_log.append(heartbeats)
+            heartbeats = await __get_heartbeats__()
         else:
+            heartbeats_log = heartbeats_log[-100:]
             return JsonResponse({
-                'foo': get_data,
-                "worker_response": str(worker_response)
+                "heartbeats_log": heartbeats_log
             })
     else:
         return HttpResponse("Only support GET method")

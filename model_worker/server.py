@@ -1,5 +1,5 @@
 import json
-
+import datetime
 from util.aredis_queue import NLUQueue
 import asyncio
 
@@ -19,7 +19,12 @@ async def send_responds(obj,request_id):
     return await redis_to_API.set_msg_by_direct_id_ex(id=request_id, second2expire=300, value=obj)
 
 
+async def send_heartbeats():
+    return await redis_to_API.enqueue({"status": True, "label": "sample worker", "datetime":str(datetime.datetime.now())})
+
+
 async def main():
+    idx = 0
     while True:
         task = await get_work()
         if task is not None:
@@ -27,6 +32,10 @@ async def main():
             request_id = task.get("request_id", None)
             await send_responds(obj, request_id)
         else:
+            idx += 1
+            if idx == 30:
+                await send_heartbeats()
+                idx = 0
             await asyncio.sleep(1)
 
 
